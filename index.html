@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>পাঞ্জাবি স্টক সিস্টেম</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --navy-dark: #00072D;
+            --bg-color: var(--navy-dark);
+            --text-color: #ffffff;
+            --card-bg: rgba(0, 7, 45, 0.8);
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f0f8ff;
+            --text-color: #00072D;
+            --card-bg: rgba(240, 248, 255, 0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: 0.3s ease;
+        }
+
+        body {
+            font-family: 'Kalpurush', Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 2px solid var(--neon-blue);
+            color: var(--text-color);
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 25px;
+            z-index: 1000;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--neon-blue);
+            padding: 30px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: var(--card-bg);
+        }
+        .copy-all-btn {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--neon-blue);
+            color: var(--navy-dark);
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+
+        .card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            cursor: zoom-in;
+        }
+
+        .stock-info {
+            padding: 15px;
+        }
+
+        .sizes-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .size-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: var(--neon-blue);
+            color: var(--navy-dark);
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .copy-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--navy-dark);
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border: 2px solid var(--neon-blue);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">💡 থিম পরিবর্তন</button>
+    
+    <div class="upload-area" id="dropZone">
+        📁 ইমেজ এখানে ড্রপ করুন বা পেস্ট করুন (Ctrl+V)
+        
+    </div>
+    <div class="gallery" id="gallery"></div>
+    <div class="modal" id="modal"><img id="zoomedImg"></div>
+
+    <script>
+        // সম্পূর্ণ স্টক ডাটা
+        const stockData = [
+            {
+                No: 1,
+                Name: "Lime Legacy",
+                M: 44,
+                L: 53,
+                XL: 76,
+                XXL: 0,
+                Image: "images/Lime_lapse.jpg"
+            },
+            {
+                No: 2,
+                Name: "Brown Legacy",
+                M: 121,
+                L: 123,
+                XL: 131,
+                XXL: 22,
+                Image: "images/Brown_Legacy.jpg"
+            },
+            {
+                No: 3,
+                Name: "Moonstone",
+                M: 41,
+                L: 0,
+                XL: 57,
+                XXL: 0,
+                Image: "images/Moonstone.jpg"
+            },
+            {
+                No: 4,
+                Name: "Gray",
+                M: 24,
+                L: 0,
+                XL: 55,
+                XXL: 0,
+                Image: "images/Gray.jpg"
+            },
+            {
+                No: 5,
+                Name: "Dark Navy",
+                M: 139,
+                L: 119,
+                XL: 161,
+                XXL: 23,
+                Image: "images/Dark_Navy.jpg"
+            },
+            {
+                No: 6,
+                Name: "Olive",
+                M: 163,
+                L: 139,
+                XL: 179,
+                XXL: 35,
+                Image: "images/Olive.jpg"
+            },
+            {
+                No: 7,
+                Name: "White",
+                M: 92,
+                L: 55,
+                XL: 91,
+                XXL: 0,
+                Image: "images/White.jpg"
+            },
+            {
+                No: 8,
+                Name: "Black",
+                M: 93,
+                L: 57,
+                XL: 115,
+                XXL: 0,
+                Image: "images/Black.jpg"
+            },
+            {
+                No: 9,
+                Name: "Barndy Rose",
+                M: 0,
+                L: 0,
+                XL: 31,
+                XXL: 0,
+                Image: "images/Brandy_Rose.jpg"
+            },
+            {
+                No: 10,
+                Name: "Hene Levave",
+                M: 50,
+                L: 33,
+                XL: 104,
+                XXL: 0,
+                Image: "images/Heme_Leave.jpg"
+            },
+            {
+                No: 11,
+                Name: "Timber Coffee",
+                M: 178,
+                L: 174,
+                XL: 194,
+                XXL: 36,
+                Image: "images/Timber_coffee.jpg"
+            },
+            {
+                No: 12,
+                Name: "Timber Green",
+                M: 80,
+                L: 67,
+                XL: 83,
+                XXL: 10,
+                Image: "images/Timber_Green.jpg"
+            },
+            {
+                No: 13,
+                Name: "Eastern Blue",
+                M: 52,
+                L: 25,
+                XL: 94,
+                XXL: 0,
+                Image: "images/Eastern_Blue.jpg"
+            },
+            {
+                No: 14,
+                Name: "Wine Berry",
+                M: 88,
+                L: 87,
+                XL: 127,
+                XXL: 22,
+                Image: "images/Wine_Berry.jpg"
+            }
+        ];
+
+        // থিম টগল
+        function toggleTheme() {
+            document.body.dataset.theme = 
+                document.body.dataset.theme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', document.body.dataset.theme);
+        }
+
+        // গ্যালারি রেন্ডার
+        function renderGallery() {
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = stockData.map(item => `
+                <div class="card">
+                    <img src="${item.Image}" alt="${item.Name}" onclick="zoomImage('${item.Image}')">
+                    <div class="stock-info">
+                        <h3>${item.Name}</h3>
+                        <div class="sizes-grid">
+                            <div class="size-item"><span>M:</span> ${item.M}</div>
+                            <div class="size-item"><span>L:</span> ${item.L}</div>
+                            <div class="size-item"><span>XL:</span> ${item.XL}</div>
+                            <div class="size-item"><span>XXL:</span> ${item.XXL}</div>
+                        </div>
+                        <button class="copy-btn" onclick="copyImage('${item.Image}')">
+                            <i class="fas fa-copy"></i> ইমেজ কপি করুন
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ইমেজ জুম
+        function zoomImage(src) {
+            document.getElementById('zoomedImg').src = src;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        // ইমেজ কপি
+        function copyImage(src) {
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob(blob => {
+                    const item = new ClipboardItem({ 'image/png': blob });
+                    navigator.clipboard.write([item]);
+                });
+            };
+        }
+        
+
+        // ড্রাগ অ্যান্ড ড্রপ হ্যান্ডলার
+        document.getElementById('dropZone').addEventListener('drop', e => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            handleImage(file);
+        });
+
+        // পেস্ট হ্যান্ডলার
+        window.addEventListener('paste', e => {
+            const items = e.clipboardData.items;
+            for (const item of items) {
+                if (item.type.startsWith('image')) {
+                    const file = item.getAsFile();
+                    handleImage(file);
+                    break;
+                }
+            }
+        });
+
+        // ইমেজ প্রসেসিং
+        function handleImage(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const imgName = file.name.replace(/_/g, ' ').replace('.jpg', '');
+                const product = stockData.find(p => p.Name === imgName);
+                
+                const result = product ? 
+                    `স্টক: M-${product.M}, L-${product.L}, XL-${product.XL}, XXL-${product.XXL}` :
+                    'পণ্য খুঁজে পাওয়া যায়নি';
+                alert(result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ইনিশিয়ালাইজেশন
+        document.body.dataset.theme = localStorage.getItem('theme') || 'dark';
+        renderGallery();
+
+        // মোডাল বন্ধ করা
+        document.getElementById('modal').addEventListener('click', () => {
+            document.getElementById('modal').style.display = 'none';
+        });
+        
+
+
+
+            
+
+    </script>
+</body>
+</html>
